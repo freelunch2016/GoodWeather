@@ -12,6 +12,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.observe
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.wgp.goodweather.R
+import com.wgp.goodweather.ui.weather.WeatherActivity
 import kotlinx.android.synthetic.main.fragment_place.*
 
 
@@ -30,21 +31,34 @@ class PlaceFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_place,container,false)
+        return inflater.inflate(R.layout.fragment_place, container, false)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
+        if (viewModel.isPlaceSaved()) {
+            val savedPlace = viewModel.getSavedPlace()
+            WeatherActivity.startWeatherActivity(
+                context!!,
+                savedPlace.location.lat,
+                savedPlace.location.lng,
+                savedPlace.name
+            )
+            activity?.finish()
+            return
+        }
+
+
         val linearLayoutManager = LinearLayoutManager(activity)
         recyclerView.layoutManager = linearLayoutManager
-        adapter = PlaceAdapter(this,viewModel.placeList)
+        adapter = PlaceAdapter(this, viewModel.placeList)
         recyclerView.adapter = adapter
 
         searchPlaceEdit.addTextChangedListener { text: Editable? ->
             val content = text.toString()
-            if (content.isNotEmpty()){
+            if (content.isNotEmpty()) {
                 viewModel.searchPlaces(content)
-            }else{
+            } else {
                 recyclerView.visibility = View.GONE
                 bgImageView.visibility = View.VISIBLE
                 viewModel.placeList.clear()
@@ -52,17 +66,16 @@ class PlaceFragment : Fragment() {
             }
         }
 
-        viewModel.placeLiveData.observe(this){
-            result ->
+        viewModel.placeLiveData.observe(this) { result ->
             val places = result.getOrNull()
-            if (places != null){
+            if (places != null) {
                 recyclerView.visibility = View.VISIBLE
                 bgImageView.visibility = View.GONE
                 viewModel.placeList.clear()
                 viewModel.placeList.addAll(places)
                 adapter.notifyDataSetChanged()
-            }else{
-                Toast.makeText(activity,"未能查询到任何地点",Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(activity, "未能查询到任何地点", Toast.LENGTH_SHORT).show()
                 result.exceptionOrNull()?.printStackTrace()
             }
         }

@@ -5,6 +5,7 @@ import com.google.gson.annotations.SerializedName
 
 
 /**
+ * 区域data类
  * 请求地址位置
  * 状态，及位置
  */
