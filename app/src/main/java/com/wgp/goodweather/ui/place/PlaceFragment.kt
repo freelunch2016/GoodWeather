@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.observe
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.wgp.goodweather.MainActivity
 import com.wgp.goodweather.R
 import com.wgp.goodweather.ui.weather.WeatherActivity
 import kotlinx.android.synthetic.main.fragment_place.*
@@ -36,7 +37,7 @@ class PlaceFragment : Fragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        if (viewModel.isPlaceSaved()) {
+        if (activity is MainActivity && viewModel.isPlaceSaved()) {
             val savedPlace = viewModel.getSavedPlace()
             WeatherActivity.startWeatherActivity(
                 context!!,

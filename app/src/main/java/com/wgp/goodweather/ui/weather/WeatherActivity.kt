@@ -3,15 +3,15 @@ package com.wgp.goodweather.ui.weather
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModel
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.observe
 import com.wgp.goodweather.R
@@ -30,12 +30,17 @@ import java.util.*
  */
 class WeatherActivity : AppCompatActivity() {
 
-    companion object{
-        fun startWeatherActivity(context: Context,locationLat:String,locationLng:String,placeName:String){
-            val intent = Intent(context,WeatherActivity::class.java).apply {
-                putExtra("location_lat",locationLat)
-                putExtra("location_lng",locationLng)
-                putExtra("place_name",placeName)
+    companion object {
+        fun startWeatherActivity(
+            context: Context,
+            locationLat: String,
+            locationLng: String,
+            placeName: String
+        ) {
+            val intent = Intent(context, WeatherActivity::class.java).apply {
+                putExtra("location_lat", locationLat)
+                putExtra("location_lng", locationLng)
+                putExtra("place_name", placeName)
             }
             context.startActivity(intent)
         }
@@ -43,7 +48,7 @@ class WeatherActivity : AppCompatActivity() {
 
 
     //延迟加载
-    private val viewModel by lazy {
+    val viewModel by lazy {
         ViewModelProvider(this)[WeatherViewModel::class.java]
     }
 
@@ -51,7 +56,8 @@ class WeatherActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         //设置Activity的背景和状态栏融合到一起
         val decorView = window.decorView
-        decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+        decorView.systemUiVisibility =
+            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
         window.statusBarColor = Color.TRANSPARENT
 
         setContentView(R.layout.activity_weather)
@@ -64,7 +70,7 @@ class WeatherActivity : AppCompatActivity() {
             viewModel.locationLng = intent.getStringExtra("location_lng") ?: ""
         }
         if (viewModel.placeName.isEmpty()) {
-            viewModel.locationLng = intent.getStringExtra("place_name") ?: ""
+            viewModel.placeName = intent.getStringExtra("place_name") ?: ""
         }
 
         viewModel.weatherLiveData.observe(this) { reslut ->
@@ -75,9 +81,46 @@ class WeatherActivity : AppCompatActivity() {
                 "无法成功获取天气信息".showToast()
                 reslut.exceptionOrNull()?.printStackTrace()
             }
+            swipeRefresh.isRefreshing = false
         }
 
+        swipeRefresh.setColorSchemeResources(R.color.colorPrimary)
+        refreshWeather()
+        swipeRefresh.setOnRefreshListener {
+            refreshWeather()
+        }
+
+        //点击 ，侧边栏显示
+        navBtn.setOnClickListener {
+            drawerLayout.openDrawer(GravityCompat.START)
+        }
+
+        drawerLayout.addDrawerListener(object : DrawerLayout.DrawerListener {
+            override fun onDrawerStateChanged(newState: Int) {
+            }
+
+            override fun onDrawerSlide(drawerView: View, slideOffset: Float) {
+            }
+
+            override fun onDrawerOpened(drawerView: View) {
+            }
+
+            override fun onDrawerClosed(drawerView: View) {//侧边栏关闭后，软键盘隐藏
+                val manager =
+                    getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                manager.hideSoftInputFromWindow(
+                    drawerView.windowToken,
+                    InputMethodManager.HIDE_NOT_ALWAYS
+                )
+            }
+
+        })
+    }
+
+    //刷新天气信息
+    fun refreshWeather() {
         viewModel.refreshWeather(viewModel.locationLng, viewModel.locationLat)
+        swipeRefresh.isRefreshing = true
     }
 
     private fun showWeatherInfo(weather: Weather) {
